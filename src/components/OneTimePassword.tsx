@@ -31,7 +31,6 @@ const OneTimePassword: React.FC<Props> = ({ length }) => {
     if (newValue === "") {
       fillPasswordChar(activeIndex.current, "");
       if (activeIndex.current > 0) {
-        // activeIndex.current--;
         inputsList.current[activeIndex.current - 1].focus();
       }
       return;
@@ -39,7 +38,6 @@ const OneTimePassword: React.FC<Props> = ({ length }) => {
 
     for (const char of newValue) {
       fillPasswordChar(activeIndex.current, char);
-      // activeIndex.current++;
       if (activeIndex.current + 1 >= length) return;
       inputsList.current[activeIndex.current + 1].focus();
     }
@@ -51,7 +49,6 @@ const OneTimePassword: React.FC<Props> = ({ length }) => {
       password[activeIndex.current] === "" &&
       activeIndex.current > 0
     ) {
-      // activeIndex.current--;
       fillPasswordChar(activeIndex.current - 1, "");
       inputsList.current[activeIndex.current - 1].focus();
     }
