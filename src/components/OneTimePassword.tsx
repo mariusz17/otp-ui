@@ -1,76 +1,70 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 
 type Props = {
   length: number;
 };
 
 const OneTimePassword: React.FC<Props> = ({ length }) => {
-  const [passwordArray, setPasswordArray] = useState<string[]>(
+  const [password, setPassword] = useState<string[]>(
     new Array(length).fill("")
   );
 
   const inputsList = useRef<HTMLInputElement[]>([]);
-  const valueStack = useRef<string[]>([]);
-  const stepIndex = useRef<number | null>(null);
+  const activeIndex = useRef<number>(0);
 
-  const selectNextFreeInput = (currentIndex: number) => {
-    for (let i = currentIndex; i < length; i++) {
-      if (passwordArray[i] === "") {
-        inputsList.current[i].focus();
-        return i;
-      }
-    }
-
-    return null;
-  };
-
-  const fillPasswordLetter = (index: number, letter: string) => {
-    setPasswordArray((prev) =>
-      prev.map((sign, n) => {
+  const fillPasswordChar = (index: number, newChar: string) => {
+    setPassword((prev) =>
+      prev.map((char, n) => {
         if (n === index) {
-          return letter;
+          return newChar;
         } else {
-          return sign;
+          return char;
         }
       })
     );
   };
 
   const onSignChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const currentIndex = Number(e.target.name.replace("otp-", ""));
+    activeIndex.current = Number(e.target.name.replace("otp-", ""));
     const newValue = e.target.value;
 
     if (newValue === "") {
-      fillPasswordLetter(currentIndex, "");
-      if (currentIndex > 0) {
-        inputsList.current[currentIndex - 1].focus();
+      fillPasswordChar(activeIndex.current, "");
+      if (activeIndex.current > 0) {
+        // activeIndex.current--;
+        inputsList.current[activeIndex.current - 1].focus();
       }
       return;
     }
 
-    valueStack.current = [];
-    for (const letter of newValue) {
-      valueStack.current.push(letter);
+    for (const char of newValue) {
+      fillPasswordChar(activeIndex.current, char);
+      // activeIndex.current++;
+      if (activeIndex.current + 1 >= length) return;
+      inputsList.current[activeIndex.current + 1].focus();
     }
+  };
 
-    stepIndex.current = currentIndex;
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.key === "Backspace" &&
+      password[activeIndex.current] === "" &&
+      activeIndex.current > 0
+    ) {
+      // activeIndex.current--;
+      fillPasswordChar(activeIndex.current - 1, "");
+      inputsList.current[activeIndex.current - 1].focus();
+    }
+  };
 
-    do {
-      if (stepIndex.current !== null) {
-        fillPasswordLetter(stepIndex.current, valueStack.current[0]);
-        valueStack.current.shift();
-        stepIndex.current += 1;
-      } else {
-        return;
-      }
-      stepIndex.current = selectNextFreeInput(stepIndex.current);
-    } while (valueStack.current.length > 0);
+  const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    activeIndex.current = Number(e.target.name.replace("otp-", ""));
   };
 
   return (
     <div>
       <h2>One Time Password:</h2>
-      {passwordArray.map((sign, index) => {
+      {password.map((char, index) => {
         return (
           <input
             ref={(input) => {
@@ -81,12 +75,14 @@ const OneTimePassword: React.FC<Props> = ({ length }) => {
             key={index}
             name={`otp-${index}`}
             type="text"
-            value={sign}
+            value={char}
             onChange={onSignChange}
+            onKeyDown={onKeyDown}
+            onFocus={onFocus}
           />
         );
       })}
-      <h3>User password: {passwordArray.join("")}</h3>
+      <h3>User password: {password.join("")}</h3>
     </div>
   );
 };
